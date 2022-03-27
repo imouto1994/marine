@@ -1,0 +1,13 @@
+{
+  "name": "marine",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:imouto1994/marine.git",
+  "author": "imouto1994 <nhan.bui@foodpanda.com>",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^3.2.3",
+    "puppeteer": "^13.5.1"
+  },
+  "type": "module"
+}
