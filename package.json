@@ -5,9 +5,14 @@
   "repository": "git@github.com:imouto1994/marine.git",
   "author": "imouto1994 <nhan.bui@foodpanda.com>",
   "license": "MIT",
-  "dependencies": {
-    "node-fetch": "^3.2.3",
-    "puppeteer": "^13.5.1"
+  "scripts": {
+    "build-script": "pkg ./scrape.js -c pkg-marine.json --public -o marine && node zip.js"
   },
-  "type": "module"
+  "dependencies": {
+    "node-fetch": "2.6.6"
+  },
+  "devDependencies": {
+    "adm-zip": "0.5.9",
+    "pkg": "5.8.0"
+  }
 }

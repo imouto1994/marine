@@ -1,5 +1,7 @@
 node_modules/
 dist/
 .DS_Store
-cookies.json
 localStorage.json
+entries.json
+marine.exe
+marine.zip
