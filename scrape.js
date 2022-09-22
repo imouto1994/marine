@@ -184,7 +184,7 @@ async function scrapeComic(comicId, startIndex) {
   );
   const titleDirPath = path.join(
     process.cwd(),
-    `./dist/${data.comic.information.title}`
+    `./dist/${data.comic.information.title.replace(/[/\\?%*:|"<>]/g, "-")}`
   );
   await fsPromises.mkdir(titleDirPath, { recursive: true });
 
