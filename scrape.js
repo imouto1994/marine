@@ -3,6 +3,9 @@ const fsPromises = require("fs/promises");
 const fs = require("fs");
 const path = require("path");
 const url = require("url");
+const sharp = require("sharp");
+
+const MAX_HEIGHT = 3000;
 
 // Read local storage
 const localStorageJSON = fs.readFileSync(
@@ -104,7 +107,7 @@ async function scrapeEpisode(comicId, index, episode, titleDirPath) {
   // Download thumbnails
   for (let i = 0; i < episode.thumbnailUrls.length; i++) {
     const thumbnailUrl = episode.thumbnailUrls[i];
-    downloadImage(
+    await downloadImage(
       thumbnailUrl,
       path.resolve(episodeDirPath, `./thumbnail_${i + 1}.webp`)
     );
@@ -115,20 +118,53 @@ async function scrapeEpisode(comicId, index, episode, titleDirPath) {
     contentImage: { webp: images },
   } = episodeViewerData;
   for (let i = 0; i < images.length; i++) {
-    const image = images[i];
-    downloadImage(
-      image.path,
-      path.resolve(episodeDirPath, `./${String(i + 1).padStart(3, "0")}.webp`)
+    const { path: imageRemotePath, height, width } = images[i];
+    const imageFileName = String(i + 1).padStart(3, "0");
+    const imageSavePath = path.resolve(
+      episodeDirPath,
+      `./${imageFileName}.webp`
     );
+    await downloadImage(imageRemotePath, imageSavePath);
+
+    // Split images if needed
+    if (height > MAX_HEIGHT) {
+      const imageSharp = sharp(imageSavePath);
+      const cropCount = Math.ceil(height / MAX_HEIGHT);
+      for (let j = 0; j < cropCount; j++) {
+        const croppedImagePath = path.resolve(
+          episodeDirPath,
+          `./${imageFileName}_${String(j + 1).padStart(3, "0")}.png`
+        );
+        const croppedImageTop = j * MAX_HEIGHT;
+        const croppedImageHeight =
+          j < cropCount - 1 ? MAX_HEIGHT : height - croppedImageTop;
+        await imageSharp
+          .extract({
+            left: 0,
+            top: croppedImageTop,
+            width,
+            height: croppedImageHeight,
+          })
+          .toFile(croppedImagePath);
+      }
+      fsPromises.unlink(imageSavePath);
+    }
   }
 }
 
-async function downloadImage(imageUrl, filePath) {
-  const response = await fetch(imageUrl);
-  response.body.pipe(fs.createWriteStream(filePath));
+function downloadImage(imageUrl, filePath) {
+  return fetch(imageUrl).then(
+    (response) =>
+      new Promise((resolve, reject) => {
+        const dest = fs.createWriteStream(filePath);
+        response.body.pipe(dest);
+        response.body.on("end", resolve);
+        dest.on("error", reject);
+      })
+  );
 }
 
-async function scrapeComic(comicId, startIndex) {
+async function scrapeComic(comicId, startIndex, endIndex) {
   console.log(`Fetching information for comic with ID ${comicId}...`);
 
   // Fetch episodes
@@ -193,12 +229,15 @@ async function scrapeComic(comicId, startIndex) {
     if (i < startIndex) {
       continue;
     }
+    if (endIndex != null && i > endIndex) {
+      continue;
+    }
     await scrapeEpisode(comicId, i, episodes[i], titleDirPath);
   }
 }
 
 (async () => {
   for (const entry of entries) {
-    await scrapeComic(entry.id, entry.startIndex);
+    await scrapeComic(entry.id, entry.startIndex, entry.endIndex);
   }
 })();

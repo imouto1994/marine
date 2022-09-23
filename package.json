@@ -9,7 +9,8 @@
     "build-script": "pkg ./scrape.js -c pkg-marine.json --public -o marine && node zip.js"
   },
   "dependencies": {
-    "node-fetch": "2.6.6"
+    "node-fetch": "2.6.6",
+    "sharp": "0.31.0"
   },
   "devDependencies": {
     "adm-zip": "0.5.9",
